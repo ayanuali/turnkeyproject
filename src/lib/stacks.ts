@@ -80,15 +80,18 @@ export const buildSTXTransfer = async (
   amount: number,
   memo: string,
   nonce: number,
-  publicKey: string
+  privateKeyHex: string
 ) => {
   try {
     console.log("building stx transfer");
 
+    // for demo, use private key directly
+    // in production, turnkey manages keys and signing
+
     const txOptions = {
       recipient: toAddr,
       amount: BigInt(amount),
-      publicKey,
+      senderKey: privateKeyHex,
       network,
       memo,
       anchorMode: AnchorMode.Any,
@@ -96,12 +99,11 @@ export const buildSTXTransfer = async (
       fee: BigInt(1000), // 0.001 STX
     };
 
-    const tx = await makeUnsignedSTXTokenTransfer(txOptions);
-    const serialized = tx.serialize();
+    const tx = await makeSTXTokenTransfer(txOptions);
 
-    console.log("stx tx built");
+    console.log("stx tx built and signed");
 
-    return { tx, serialized };
+    return { tx };
   } catch (e) {
     console.error("stx transfer build failed:", e);
     throw e;

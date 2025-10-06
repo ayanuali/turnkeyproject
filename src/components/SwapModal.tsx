@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { Listing } from "@/types";
 import { formatSBTC, formatSTX, getWallet, updateListingStatus } from "@/lib/sbtc";
-import { buildSTXTransfer, getAccountNonce, stxToMicro, checkTxStatus, attachSignatureToTx, broadcastSignedTx } from "@/lib/stacks";
-import { signStacksTx, getWalletPubKey } from "@/lib/turnkey";
+import { buildSTXTransfer, getAccountNonce, stxToMicro, checkTxStatus, broadcastSignedTx } from "@/lib/stacks";
 
 interface SwapModalProps {
   listing: Listing | null;
@@ -31,46 +30,26 @@ export default function SwapModal({ listing, onClose, onSuccess }: SwapModalProp
         throw new Error("no wallet found");
       }
 
-      // get public key from turnkey
-      setStatus("getting wallet public key...");
-      const pubKey = await getWalletPubKey(wallet.walletId);
-
-      if (!pubKey) {
-        throw new Error("could not get public key");
-      }
-
       // get account nonce
       setStatus("getting account nonce...");
       const nonce = await getAccountNonce(wallet.address);
 
-      // build stx payment tx
-      setStatus("building transaction...");
+      // build and sign stx payment tx
+      setStatus("building and signing transaction...");
       const amount = stxToMicro(listing.price);
 
-      const { tx, serialized } = await buildSTXTransfer(
+      const { tx } = await buildSTXTransfer(
         wallet.address,
         listing.seller,
         amount,
         `buy-${listing.id}`,
         nonce,
-        pubKey
+        wallet.privateKey
       );
-
-      // sign with turnkey
-      setStatus("signing transaction...");
-      const signature = await signStacksTx(wallet.walletId, serialized);
-
-      if (!signature) {
-        throw new Error("signing failed - no signature returned");
-      }
-
-      // attach signature to tx
-      setStatus("attaching signature...");
-      const signedTx = attachSignatureToTx(tx, signature, pubKey);
 
       // broadcast to network
       setStatus("broadcasting transaction...");
-      const txResult = await broadcastSignedTx(signedTx);
+      const txResult = await broadcastSignedTx(tx);
 
       const txId = typeof txResult === 'string' ? txResult : txResult.txid || 'unknown';
       setTxId(txId);
