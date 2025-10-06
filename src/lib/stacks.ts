@@ -1,6 +1,8 @@
 import {
   makeSTXTokenTransfer,
   makeContractCall,
+  makeUnsignedContractCall,
+  makeUnsignedSTXTokenTransfer,
   broadcastTransaction,
   AnchorMode,
   PostConditionMode,
@@ -38,7 +40,7 @@ export const buildSBTCTransfer = async (
 
     console.log("building sbtc transfer tx");
 
-    // build contract call without private key
+    // build unsigned contract call
     const txOptions = {
       contractAddress: contractAddr,
       contractName: contractName,
@@ -53,11 +55,11 @@ export const buildSBTCTransfer = async (
       network,
       anchorMode: AnchorMode.Any,
       postConditionMode: PostConditionMode.Allow,
-      nonce,
+      nonce: BigInt(nonce),
       fee: BigInt(10000), // 0.01 STX
     };
 
-    const tx = await makeContractCall(txOptions);
+    const tx = await makeUnsignedContractCall(txOptions);
 
     // serialize for signing
     const serialized = tx.serialize();
@@ -90,11 +92,11 @@ export const buildSTXTransfer = async (
       network,
       memo,
       anchorMode: AnchorMode.Any,
-      nonce,
+      nonce: BigInt(nonce),
       fee: BigInt(1000), // 0.001 STX
     };
 
-    const tx = await makeSTXTokenTransfer(txOptions);
+    const tx = await makeUnsignedSTXTokenTransfer(txOptions);
     const serialized = tx.serialize();
 
     console.log("stx tx built");
