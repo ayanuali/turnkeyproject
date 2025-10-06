@@ -1,9 +1,14 @@
-import type { Metadata } from "next";
-import "./globals.css";
+"use client";
 
-export const metadata: Metadata = {
-  title: "sBTC P2P Swap",
-  description: "peer to peer sbtc marketplace with embedded wallets",
+import "./globals.css";
+import { TurnkeyProvider } from "@turnkey/sdk-react";
+
+const turnkeyConfig = {
+  apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_URL || "https://api.turnkey.com",
+  defaultOrganizationId: process.env.NEXT_PUBLIC_TURNKEY_ORG_ID || "",
+  rpId: process.env.NEXT_PUBLIC_RPID || "turnkeyproject.vercel.app",
+  iframeUrl: "https://auth.turnkey.com",
+  serverSignUrl: "/api/turnkey-sign", // optional backend endpoint
 };
 
 export default function RootLayout({
@@ -13,7 +18,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <TurnkeyProvider config={turnkeyConfig}>
+          {children}
+        </TurnkeyProvider>
+      </body>
     </html>
   );
 }
