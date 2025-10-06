@@ -1,36 +1,26 @@
 import { Turnkey } from "@turnkey/sdk-browser";
 import { createActivityPoller } from "@turnkey/http";
-import { IframeStamper } from "@turnkey/iframe-stamper";
 
 // init the turnkey client
 let tkClient: any = null;
-let stamper: any = null;
 
 export const setupTurnkey = async () => {
   if (tkClient) return tkClient;
 
   try {
-    // create iframe stamper for embedded auth
-    stamper = new IframeStamper({
-      iframeUrl: "https://auth.turnkey.com",
-      iframeContainer: document.body,
-      iframeElementId: "turnkey-iframe",
-    });
-
-    // wait for iframe ready
-    await stamper.init();
+    // NOTE: for production embedded wallets, you'd use iframe stamper or passkeys
+    // for this demo we're using basic setup
+    // the iframe stamper would be initialized here in production
 
     tkClient = new Turnkey({
       apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_URL || "https://api.turnkey.com",
-      defaultOrganizationId: process.env.NEXT_PUBLIC_TURNKEY_ORG_ID,
-      stamper,
+      defaultOrganizationId: process.env.NEXT_PUBLIC_TURNKEY_ORG_ID || "",
     });
 
-    console.log("turnkey ready with iframe stamper");
+    console.log("turnkey client initialized");
     return tkClient;
   } catch (e) {
     console.error("setup failed:", e);
-    // TODO: add retry logic
     throw e;
   }
 };
@@ -62,12 +52,12 @@ export const makeWallet = async (uid: string) => {
 
     const result = await poller({
       activityId: activity.activity.id,
-      organizationId: process.env.NEXT_PUBLIC_TURNKEY_ORG_ID,
+      organizationId: process.env.NEXT_PUBLIC_TURNKEY_ORG_ID || "",
     });
 
     // extract wallet info
-    const walletId = result.activity.result.createWalletResult?.walletId;
-    const addr = result.activity.result.createWalletResult?.addresses?.[0];
+    const walletId = result.result.createWalletResult?.walletId;
+    const addr = result.result.createWalletResult?.addresses?.[0];
 
     console.log("wallet created:", walletId);
 
@@ -104,14 +94,19 @@ export const signStacksTx = async (walletId: string, txBytes: Uint8Array) => {
 
     const result = await poller({
       activityId: activity.activity.id,
-      organizationId: process.env.NEXT_PUBLIC_TURNKEY_ORG_ID,
+      organizationId: process.env.NEXT_PUBLIC_TURNKEY_ORG_ID || "",
     });
 
-    const sig = result.activity.result.signRawPayloadResult?.signature;
+    const sigResult = result.result.signRawPayloadResult;
 
-    console.log("got signature");
+    // turnkey returns r, s, v components
+    if (sigResult) {
+      const sig = sigResult.r + sigResult.s + sigResult.v;
+      console.log("got signature");
+      return sig;
+    }
 
-    return sig;
+    throw new Error("no signature in result");
   } catch (e) {
     console.error("signing failed:", e);
     throw e;
