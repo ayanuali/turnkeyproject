@@ -73,8 +73,9 @@ export default function SwapModal({ listing, onClose, onSuccess }: SwapModalProp
 
       // broadcast to network
       setStatus("broadcasting transaction...");
-      const txId = await broadcastSignedTx(signedTxHex);
+      const txResult = await broadcastSignedTx(signedTxHex);
 
+      const txId = typeof txResult === 'string' ? txResult : txResult.txid || 'unknown';
       setTxId(txId);
       console.log("tx broadcasted:", txId);
 
