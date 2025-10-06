@@ -146,7 +146,10 @@ export const broadcastSignedTx = async (txHex: string) => {
   try {
     console.log("broadcasting tx...");
 
-    const result = await broadcastTransaction(txHex, network);
+    // convert hex to buffer for broadcast
+    const txBuffer = Buffer.from(txHex, "hex");
+
+    const result = await broadcastTransaction(txBuffer, network);
 
     console.log("tx broadcast:", result.txid || result);
 
