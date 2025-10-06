@@ -141,15 +141,12 @@ export const attachSignatureToTx = (unsignedTx: any, signatureHex: string, publi
   }
 };
 
-// broadcast signed tx
-export const broadcastSignedTx = async (txHex: string) => {
+// broadcast signed tx object
+export const broadcastSignedTx = async (signedTx: any) => {
   try {
     console.log("broadcasting tx...");
 
-    // convert hex to buffer for broadcast
-    const txBuffer = Buffer.from(txHex, "hex");
-
-    const result = await broadcastTransaction(txBuffer, network);
+    const result = await broadcastTransaction(signedTx, network);
 
     console.log("tx broadcast:", result.txid || result);
 

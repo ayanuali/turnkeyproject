@@ -68,12 +68,9 @@ export default function SwapModal({ listing, onClose, onSuccess }: SwapModalProp
       setStatus("attaching signature...");
       const signedTx = attachSignatureToTx(tx, signature, pubKey);
 
-      // serialize signed tx
-      const signedTxHex = signedTx.serialize().toString("hex");
-
       // broadcast to network
       setStatus("broadcasting transaction...");
-      const txResult = await broadcastSignedTx(signedTxHex);
+      const txResult = await broadcastSignedTx(signedTx);
 
       const txId = typeof txResult === 'string' ? txResult : txResult.txid || 'unknown';
       setTxId(txId);
