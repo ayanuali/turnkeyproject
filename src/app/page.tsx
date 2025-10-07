@@ -58,7 +58,7 @@ export default function Home() {
         <h1>sBTC P2P Swap</h1>
         <div className="wallet-info">
           <span className="label">wallet:</span>
-          <span className="address">{walletAddr.substring(0, 15)}...</span>
+          <span className="address">{walletAddr}</span>
         </div>
       </header>
 

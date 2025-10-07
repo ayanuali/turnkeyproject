@@ -45,8 +45,16 @@ export default function ListingBrowser({
       const countData = await getListingCount();
       console.log("count response:", countData);
 
-      // parse count from clarity value
-      const count = parseInt(countData.result.replace("0x", ""), 16);
+      // parse count from clarity value (it's a uint CV)
+      let count = 0;
+      if (countData.result) {
+        // clarity uint is represented as 0x + 32 hex chars (128 bits)
+        // we need to parse just the actual value (last bytes)
+        const hex = countData.result.replace("0x01", ""); // 0x01 prefix is clarity uint type
+        // take last 16 chars (64 bits) to avoid overflow
+        const lastBytes = hex.slice(-16);
+        count = parseInt(lastBytes, 16);
+      }
       console.log("total listings on-chain:", count);
 
       if (count === 0) {
