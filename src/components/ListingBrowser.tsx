@@ -79,9 +79,15 @@ export default function ListingBrowser({
           if (data && typeof data === 'object' && 'value' in data) {
             // it's an optional (some) type, unwrap it
             const listingObj = data.value as any;
+
+            // convert seller principal to string
+            const sellerStr = typeof listingObj.seller === 'string'
+              ? listingObj.seller
+              : listingObj.seller.address || String(listingObj.seller);
+
             fetchedListings.push({
               id: i,
-              seller: listingObj.seller,
+              seller: sellerStr,
               amount: Number(listingObj.amount),
               price: Number(listingObj.price),
               active: listingObj.active,
