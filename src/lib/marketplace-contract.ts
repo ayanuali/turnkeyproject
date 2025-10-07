@@ -122,19 +122,19 @@ export const getListingCount = async () => {
   }
 };
 
-// buy listing on-chain
-export const buyListingOnChain = async (
+// mark listing as sold on-chain
+export const markListingSold = async (
   senderKey: string,
   listingId: number,
   nonce: number
 ) => {
   try {
-    console.log("buying listing on-chain");
+    console.log("marking listing as sold on-chain");
 
     const txOptions = {
       contractAddress: MARKETPLACE_CONTRACT_ADDRESS,
       contractName: MARKETPLACE_CONTRACT_NAME,
-      functionName: "buy-listing",
+      functionName: "mark-sold",
       functionArgs: [uintCV(listingId)],
       senderKey,
       network,
@@ -147,10 +147,10 @@ export const buyListingOnChain = async (
     const tx = await makeContractCall(txOptions);
     const result = await broadcastTransaction(tx, network);
 
-    console.log("listing bought on-chain:", result);
+    console.log("listing marked as sold:", result);
     return result;
   } catch (e) {
-    console.error("on-chain buy failed:", e);
+    console.error("mark-sold failed:", e);
     throw e;
   }
 };

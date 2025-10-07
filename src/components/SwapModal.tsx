@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Listing } from "@/types";
-import { formatSBTC, formatSTX, getWallet, updateListingStatus } from "@/lib/sbtc";
-import { buildSTXTransfer, getAccountNonce, stxToMicro, checkTxStatus, broadcastSignedTx } from "@/lib/stacks";
+import { formatSBTC, formatSTX, getWallet } from "@/lib/sbtc";
+import { buildSTXTransfer, getAccountNonce, stxToMicro, broadcastSignedTx } from "@/lib/stacks";
+import { markListingSold } from "@/lib/marketplace-contract";
+
+interface OnChainListing {
+  id: number;
+  seller: string;
+  amount: number;
+  price: number;
+  active: boolean;
+}
 
 interface SwapModalProps {
-  listing: Listing | null;
+  listing: OnChainListing | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -34,33 +42,33 @@ export default function SwapModal({ listing, onClose, onSuccess }: SwapModalProp
       setStatus("getting account nonce...");
       const nonce = await getAccountNonce(wallet.address);
 
-      // build and sign stx payment tx
-      setStatus("building and signing transaction...");
-      const amount = stxToMicro(listing.price);
+      // step 1: send STX payment to seller
+      setStatus("sending STX payment to seller...");
+      const priceInMicroStx = listing.price; // already in micro-stx from contract
 
       const { tx } = await buildSTXTransfer(
         wallet.address,
         listing.seller,
-        amount,
-        `buy-${listing.id}`,
+        priceInMicroStx,
+        `buy-listing-${listing.id}`,
         nonce,
         wallet.privateKey
       );
 
-      // broadcast to network
-      setStatus("broadcasting transaction...");
-      const txResult = await broadcastSignedTx(tx);
+      const paymentResult = await broadcastSignedTx(tx);
+      const paymentTxId = typeof paymentResult === 'string' ? paymentResult : paymentResult.txid || 'unknown';
+      console.log("payment tx broadcasted:", paymentTxId);
 
-      const txId = typeof txResult === 'string' ? txResult : txResult.txid || 'unknown';
-      setTxId(txId);
-      console.log("tx broadcasted:", txId);
+      // step 2: mark listing as sold on-chain
+      setStatus("marking listing as sold on-chain...");
+      const markSoldResult = await markListingSold(wallet.privateKey, listing.id, nonce + 1);
+      const markSoldTxId = typeof markSoldResult === 'string' ? markSoldResult : markSoldResult.txid || 'unknown';
+      console.log("mark-sold tx broadcasted:", markSoldTxId);
 
-      // update listing status
-      updateListingStatus(listing.id, "sold");
+      setTxId(paymentTxId);
+      setStatus(`swap complete! payment: ${paymentTxId.substring(0, 10)}... | mark-sold: ${markSoldTxId.substring(0, 10)}...`);
 
-      setStatus("transaction submitted! waiting for confirmation...");
-
-      // wait a bit then close
+      // wait then refresh
       setTimeout(() => {
         onSuccess();
         onClose();
@@ -83,12 +91,12 @@ export default function SwapModal({ listing, onClose, onSuccess }: SwapModalProp
         <div className="swap-details">
           <div className="detail-row">
             <span>you will receive:</span>
-            <span className="highlight">{formatSBTC(listing.amount)}</span>
+            <span className="highlight">{formatSBTC(listing.amount / 100000000)}</span>
           </div>
 
           <div className="detail-row">
             <span>you will pay:</span>
-            <span className="highlight">{formatSTX(listing.price)}</span>
+            <span className="highlight">{formatSTX(listing.price / 1000000)}</span>
           </div>
 
           <div className="detail-row">

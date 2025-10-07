@@ -12,7 +12,7 @@ export default function Home() {
   const [hasWallet, setHasWallet] = useState(false);
   const [walletAddr, setWalletAddr] = useState("");
   const [activeTab, setActiveTab] = useState<"browse" | "create" | "my-listings">("browse");
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [selectedListing, setSelectedListing] = useState<any>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function Home() {
     setActiveTab("browse");
   };
 
-  const handleBuyClick = (listing: Listing) => {
+  const handleBuyClick = (listing: any) => {
     setSelectedListing(listing);
   };
 
