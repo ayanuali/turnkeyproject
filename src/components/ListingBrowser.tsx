@@ -83,14 +83,34 @@ export default function ListingBrowser({
             // convert seller principal to string
             const sellerStr = typeof listingObj.seller === 'string'
               ? listingObj.seller
-              : listingObj.seller.address || String(listingObj.seller);
+              : listingObj.seller.address || listingObj.seller.value || String(listingObj.seller);
+
+            // convert clarity uint values to numbers
+            const amountNum = typeof listingObj.amount === 'number'
+              ? listingObj.amount
+              : Number(listingObj.amount.value || listingObj.amount);
+
+            const priceNum = typeof listingObj.price === 'number'
+              ? listingObj.price
+              : Number(listingObj.price.value || listingObj.price);
+
+            const activeVal = typeof listingObj.active === 'boolean'
+              ? listingObj.active
+              : Boolean(listingObj.active.value);
+
+            console.log(`converted values for listing ${i}:`, {
+              seller: sellerStr,
+              amount: amountNum,
+              price: priceNum,
+              active: activeVal
+            });
 
             fetchedListings.push({
               id: i,
               seller: sellerStr,
-              amount: Number(listingObj.amount),
-              price: Number(listingObj.price),
-              active: listingObj.active,
+              amount: amountNum,
+              price: priceNum,
+              active: activeVal,
             });
           }
         }
