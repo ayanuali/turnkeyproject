@@ -11,7 +11,7 @@ import { Listing } from "@/types";
 export default function Home() {
   const [hasWallet, setHasWallet] = useState(false);
   const [walletAddr, setWalletAddr] = useState("");
-  const [activeTab, setActiveTab] = useState<"browse" | "create">("browse");
+  const [activeTab, setActiveTab] = useState<"browse" | "create" | "my-listings">("browse");
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -70,6 +70,12 @@ export default function Home() {
           browse
         </button>
         <button
+          className={activeTab === "my-listings" ? "tab active" : "tab"}
+          onClick={() => setActiveTab("my-listings")}
+        >
+          my listings
+        </button>
+        <button
           className={activeTab === "create" ? "tab active" : "tab"}
           onClick={() => setActiveTab("create")}
         >
@@ -82,6 +88,13 @@ export default function Home() {
           <ListingBrowser
             onBuyClick={handleBuyClick}
             refresh={refreshKey}
+            showOnlyOthers={true}
+          />
+        ) : activeTab === "my-listings" ? (
+          <ListingBrowser
+            onBuyClick={handleBuyClick}
+            refresh={refreshKey}
+            showOnlyOthers={false}
           />
         ) : (
           <CreateListing onListingCreated={handleListingCreated} />

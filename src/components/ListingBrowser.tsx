@@ -6,10 +6,12 @@ import { Listing } from "@/types";
 
 export default function ListingBrowser({
   onBuyClick,
-  refresh
+  refresh,
+  showOnlyOthers = true,
 }: {
   onBuyClick: (listing: Listing) => void;
   refresh: number;
+  showOnlyOthers?: boolean;
 }) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [myAddr, setMyAddr] = useState("");
@@ -32,22 +34,25 @@ export default function ListingBrowser({
     console.log("all listings:", allListings);
   };
 
-  // filter out my own listings
-  const otherListings = listings.filter(l => l.seller !== myAddr);
-  console.log("other listings (filtered):", otherListings.length);
+  // filter listings based on mode
+  const displayListings = showOnlyOthers
+    ? listings.filter(l => l.seller !== myAddr)
+    : listings.filter(l => l.seller === myAddr);
+
+  console.log("display listings (filtered):", displayListings.length);
 
   return (
     <div className="listing-browser">
-      <h2>available listings</h2>
+      <h2>{showOnlyOthers ? "available listings" : "my listings"}</h2>
 
-      {otherListings.length === 0 ? (
+      {displayListings.length === 0 ? (
         <div className="no-listings">
-          <p>no listings available</p>
-          <p className="hint">create a listing in another browser to test</p>
+          <p>{showOnlyOthers ? "no listings available" : "you haven't created any listings yet"}</p>
+          {showOnlyOthers && <p className="hint">note: listings are stored locally in your browser</p>}
         </div>
       ) : (
         <div className="listings-grid">
-          {otherListings.map(listing => (
+          {displayListings.map(listing => (
             <div key={listing.id} className="listing-card">
               <div className="listing-amount">
                 {formatSBTC(listing.amount)}
@@ -61,12 +66,19 @@ export default function ListingBrowser({
                 seller: {listing.seller.substring(0, 10)}...
               </div>
 
-              <button
-                className="buy-btn"
-                onClick={() => onBuyClick(listing)}
-              >
-                buy
-              </button>
+              {showOnlyOthers && (
+                <button
+                  className="buy-btn"
+                  onClick={() => onBuyClick(listing)}
+                >
+                  buy
+                </button>
+              )}
+              {!showOnlyOthers && (
+                <div style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+                  status: {listing.status}
+                </div>
+              )}
             </div>
           ))}
         </div>
