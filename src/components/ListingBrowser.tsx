@@ -1,20 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getListings, formatSBTC, formatSTX, getWallet } from "@/lib/sbtc";
-import { Listing } from "@/types";
+import { formatSBTC, formatSTX, getWallet } from "@/lib/sbtc";
+import { getListingCount, getListingFromChain } from "@/lib/marketplace-contract";
+import { cvToValue } from "@stacks/transactions";
+
+interface OnChainListing {
+  id: number;
+  seller: string;
+  amount: number;
+  price: number;
+  active: boolean;
+}
 
 export default function ListingBrowser({
   onBuyClick,
   refresh,
   showOnlyOthers = true,
 }: {
-  onBuyClick: (listing: Listing) => void;
+  onBuyClick: (listing: any) => void;
   refresh: number;
   showOnlyOthers?: boolean;
 }) {
-  const [listings, setListings] = useState<Listing[]>([]);
+  const [listings, setListings] = useState<OnChainListing[]>([]);
   const [myAddr, setMyAddr] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadListings();
@@ -26,12 +36,49 @@ export default function ListingBrowser({
     }
   }, [refresh]);
 
-  const loadListings = () => {
-    const allListings = getListings();
-    setListings(allListings);
-    console.log("loaded", allListings.length, "listings");
-    console.log("my address:", myAddr);
-    console.log("all listings:", allListings);
+  const loadListings = async () => {
+    setLoading(true);
+    try {
+      console.log("fetching listings from blockchain...");
+
+      // get total count
+      const countData = await getListingCount();
+      console.log("count response:", countData);
+
+      // parse count from clarity value
+      const count = parseInt(countData.result.replace("0x", ""), 16);
+      console.log("total listings on-chain:", count);
+
+      if (count === 0) {
+        setListings([]);
+        return;
+      }
+
+      // fetch all listings
+      const fetchedListings: OnChainListing[] = [];
+      for (let i = 1; i <= count; i++) {
+        const listingData = await getListingFromChain(i);
+        console.log(`listing ${i}:`, listingData);
+
+        if (listingData.result && listingData.result.data) {
+          const data = cvToValue(listingData.result);
+          fetchedListings.push({
+            id: i,
+            seller: data.seller,
+            amount: Number(data.amount),
+            price: Number(data.price),
+            active: data.active,
+          });
+        }
+      }
+
+      console.log("fetched listings:", fetchedListings);
+      setListings(fetchedListings.filter(l => l.active));
+    } catch (e) {
+      console.error("failed to load listings:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // filter listings based on mode
@@ -45,21 +92,25 @@ export default function ListingBrowser({
     <div className="listing-browser">
       <h2>{showOnlyOthers ? "available listings" : "my listings"}</h2>
 
-      {displayListings.length === 0 ? (
+      {loading ? (
+        <div className="no-listings">
+          <p>loading listings from blockchain...</p>
+        </div>
+      ) : displayListings.length === 0 ? (
         <div className="no-listings">
           <p>{showOnlyOthers ? "no listings available" : "you haven't created any listings yet"}</p>
-          {showOnlyOthers && <p className="hint">note: listings are stored locally in your browser</p>}
+          <p className="hint">listings are stored on stacks testnet blockchain</p>
         </div>
       ) : (
         <div className="listings-grid">
           {displayListings.map(listing => (
             <div key={listing.id} className="listing-card">
               <div className="listing-amount">
-                {formatSBTC(listing.amount)}
+                {formatSBTC(listing.amount / 100000000)}
               </div>
 
               <div className="listing-price">
-                {formatSTX(listing.price)}
+                {formatSTX(listing.price / 1000000)}
               </div>
 
               <div className="listing-seller">
@@ -76,7 +127,7 @@ export default function ListingBrowser({
               )}
               {!showOnlyOthers && (
                 <div style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
-                  status: {listing.status}
+                  id: {listing.id} • active: {listing.active ? "yes" : "no"}
                 </div>
               )}
             </div>

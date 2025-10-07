@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { saveListing, generateListingId, validateListing, getWallet } from "@/lib/sbtc";
-import { Listing } from "@/types";
+import { validateListing, getWallet } from "@/lib/sbtc";
+import { createListingOnChain } from "@/lib/marketplace-contract";
+import { getAccountNonce } from "@/lib/stacks";
 
 export default function CreateListing({ onListingCreated }: { onListingCreated: () => void }) {
   const [amount, setAmount] = useState("");
@@ -33,20 +34,27 @@ export default function CreateListing({ onListingCreated }: { onListingCreated: 
         return;
       }
 
-      // create listing
-      const listing: Listing = {
-        id: generateListingId(),
-        seller: wallet.address,
-        amount: amtNum,
-        price: priceNum,
-        status: "active",
-        created: Date.now(),
-      };
+      // get nonce
+      const nonce = await getAccountNonce(wallet.address);
 
-      // save to localstorage
-      saveListing(listing);
+      // convert to sats (1 sBTC = 100,000,000 sats)
+      const amountSats = Math.floor(amtNum * 100000000);
+      // convert price to micro-stx (1 STX = 1,000,000 micro-stx)
+      const priceMicroStx = Math.floor(priceNum * 1000000);
 
-      console.log("listing created:", listing.id);
+      console.log("creating listing on-chain...");
+      console.log("amount (sats):", amountSats);
+      console.log("price (micro-stx):", priceMicroStx);
+
+      // create listing on-chain
+      const result = await createListingOnChain(
+        wallet.privateKey,
+        amountSats,
+        priceMicroStx,
+        nonce
+      );
+
+      console.log("listing created on-chain:", result);
 
       // reset form
       setAmount("");

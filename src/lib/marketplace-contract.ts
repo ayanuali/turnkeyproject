@@ -14,8 +14,8 @@ import { StacksTestnet } from "@stacks/network";
 
 const network = new StacksTestnet();
 
-// deployed contract address - update after deployment
-export const MARKETPLACE_CONTRACT_ADDRESS = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM";
+// deployed contract address
+export const MARKETPLACE_CONTRACT_ADDRESS = "ST1QNFKCN58W3F1D9FQYSZGQKWG872KC6KYAV692X";
 export const MARKETPLACE_CONTRACT_NAME = "marketplace";
 
 // create listing on-chain
@@ -93,7 +93,7 @@ export const getListingCount = async () => {
     const apiUrl = process.env.NEXT_PUBLIC_STACKS_API_URL || "https://api.testnet.hiro.so";
 
     const response = await fetch(
-      `${apiUrl}/v2/contracts/call-read/${MARKETPLACE_CONTRACT_ADDRESS}/${MARKETPLACE_CONTRACT_NAME}/get-listing-count`,
+      `${apiUrl}/v2/contracts/call-read/${MARKETPLACE_CONTRACT_ADDRESS}/${MARKETPLACE_CONTRACT_NAME}/get-count`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
