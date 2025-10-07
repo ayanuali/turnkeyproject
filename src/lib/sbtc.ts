@@ -19,11 +19,15 @@ export const getListings = (): Listing[] => {
 // save listing to localstorage
 export const saveListing = (listing: Listing) => {
   try {
-    const listings = getListings();
-    listings.push(listing);
+    // get ALL listings from storage (not filtered)
+    const stored = localStorage.getItem("listings");
+    const allListings = stored ? JSON.parse(stored) : [];
 
-    localStorage.setItem("listings", JSON.stringify(listings));
+    allListings.push(listing);
+
+    localStorage.setItem("listings", JSON.stringify(allListings));
     console.log("listing saved:", listing.id);
+    console.log("total listings in storage:", allListings.length);
 
     return true;
   } catch (e) {

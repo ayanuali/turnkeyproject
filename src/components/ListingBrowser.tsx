@@ -28,10 +28,13 @@ export default function ListingBrowser({
     const allListings = getListings();
     setListings(allListings);
     console.log("loaded", allListings.length, "listings");
+    console.log("my address:", myAddr);
+    console.log("all listings:", allListings);
   };
 
   // filter out my own listings
   const otherListings = listings.filter(l => l.seller !== myAddr);
+  console.log("other listings (filtered):", otherListings.length);
 
   return (
     <div className="listing-browser">
