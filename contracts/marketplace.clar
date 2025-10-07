@@ -43,11 +43,10 @@
   (var-get listing-counter)
 )
 
-;; mark as sold
+;; mark as sold (seller or buyer can mark)
 (define-public (mark-sold (id uint))
   (let ((listing (unwrap! (map-get? listings id) err-not-found)))
     (asserts! (get active listing) err-already-sold)
-    (asserts! (not (is-eq tx-sender (get seller listing))) err-unauthorized)
     (map-set listings id (merge listing { active: false }))
     (ok true)
   )
