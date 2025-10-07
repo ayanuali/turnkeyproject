@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { formatSBTC, formatSTX, getWallet } from "@/lib/sbtc";
 import { getListingCount, getListingFromChain } from "@/lib/marketplace-contract";
-import { cvToValue } from "@stacks/transactions";
+import { cvToValue, deserializeCV } from "@stacks/transactions";
 
 interface OnChainListing {
   id: number;
@@ -68,15 +68,25 @@ export default function ListingBrowser({
         const listingData = await getListingFromChain(i);
         console.log(`listing ${i}:`, listingData);
 
-        if (listingData.result && listingData.result.data) {
-          const data = cvToValue(listingData.result);
-          fetchedListings.push({
-            id: i,
-            seller: data.seller,
-            amount: Number(data.amount),
-            price: Number(data.price),
-            active: data.active,
-          });
+        if (listingData.okay && listingData.result) {
+          // deserialize clarity value from hex
+          const clarityValue = deserializeCV(Buffer.from(listingData.result.replace('0x', ''), 'hex'));
+          console.log(`deserialized listing ${i}:`, clarityValue);
+
+          const data = cvToValue(clarityValue);
+          console.log(`parsed listing ${i}:`, data);
+
+          if (data && typeof data === 'object' && 'value' in data) {
+            // it's an optional (some) type, unwrap it
+            const listingObj = data.value as any;
+            fetchedListings.push({
+              id: i,
+              seller: listingObj.seller,
+              amount: Number(listingObj.amount),
+              price: Number(listingObj.price),
+              active: listingObj.active,
+            });
+          }
         }
       }
 
