@@ -61,6 +61,10 @@ export const getListingFromChain = async (listingId: number) => {
     const apiUrl = process.env.NEXT_PUBLIC_STACKS_API_URL || "https://api.testnet.hiro.so";
 
     // call read-only function
+    const serializedCV = serializeCV(uintCV(listingId));
+    const serializedArg = Buffer.from(serializedCV).toString('hex');
+    console.log(`fetching listing ${listingId}, serialized:`, serializedArg);
+
     const response = await fetch(
       `${apiUrl}/v2/contracts/call-read/${MARKETPLACE_CONTRACT_ADDRESS}/${MARKETPLACE_CONTRACT_NAME}/get-listing`,
       {
@@ -68,7 +72,7 @@ export const getListingFromChain = async (listingId: number) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sender: MARKETPLACE_CONTRACT_ADDRESS,
-          arguments: [`0x${serializeCV(uintCV(listingId)).toString()}`],
+          arguments: [`0x${serializedArg}`],
         }),
       }
     );
