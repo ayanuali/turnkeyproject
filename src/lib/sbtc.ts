@@ -1,6 +1,7 @@
 import { Listing } from "@/types";
 
 // get listings from localstorage
+// NOTE: for on-chain version, see contracts/marketplace.clar and DEPLOY_CONTRACT.md
 export const getListings = (): Listing[] => {
   if (typeof window === "undefined") return [];
 
