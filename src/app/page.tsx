@@ -43,6 +43,35 @@ export default function Home() {
     setSelectedListing(listing);
   };
 
+  const handleCancelClick = async (listing: any) => {
+    if (!confirm(`Cancel listing #${listing.id}?`)) return;
+
+    try {
+      console.log("canceling listing:", listing.id);
+      // TODO: call cancel-listing contract function
+      alert("Cancel functionality will be available after contract redeployment");
+      setRefreshKey(prev => prev + 1);
+    } catch (e: any) {
+      console.error("cancel failed:", e);
+      alert(e.message || "cancel failed");
+    }
+  };
+
+  const handleEditClick = async (listing: any) => {
+    const newPrice = prompt(`Enter new price in STX (current: ${(listing.price / 1000000).toFixed(2)})`);
+    if (!newPrice) return;
+
+    try {
+      console.log("updating price for listing:", listing.id, "to", newPrice);
+      // TODO: call update-price contract function
+      alert("Edit functionality will be available after contract redeployment");
+      setRefreshKey(prev => prev + 1);
+    } catch (e: any) {
+      console.error("edit failed:", e);
+      alert(e.message || "edit failed");
+    }
+  };
+
   const handleSwapSuccess = () => {
     // refresh listings
     setRefreshKey(prev => prev + 1);
@@ -95,6 +124,8 @@ export default function Home() {
             onBuyClick={handleBuyClick}
             refresh={refreshKey}
             showOnlyOthers={false}
+            onCancelClick={handleCancelClick}
+            onEditClick={handleEditClick}
           />
         ) : (
           <CreateListing onListingCreated={handleListingCreated} />

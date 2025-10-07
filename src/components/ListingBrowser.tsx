@@ -17,10 +17,14 @@ export default function ListingBrowser({
   onBuyClick,
   refresh,
   showOnlyOthers = true,
+  onCancelClick,
+  onEditClick,
 }: {
   onBuyClick: (listing: any) => void;
   refresh: number;
   showOnlyOthers?: boolean;
+  onCancelClick?: (listing: any) => void;
+  onEditClick?: (listing: any) => void;
 }) {
   const [listings, setListings] = useState<OnChainListing[]>([]);
   const [myAddr, setMyAddr] = useState("");
@@ -170,8 +174,44 @@ export default function ListingBrowser({
                 </button>
               )}
               {!showOnlyOthers && (
-                <div style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
-                  id: {listing.id} • active: {listing.active ? "yes" : "no"}
+                <div style={{ marginTop: "12px", display: "flex", gap: "8px", flexDirection: "column" }}>
+                  <div style={{ fontSize: "12px", color: "#666" }}>
+                    id: {listing.id} • active: {listing.active ? "yes" : "no"}
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      className="edit-btn"
+                      onClick={() => onEditClick?.(listing)}
+                      style={{
+                        flex: 1,
+                        padding: "8px",
+                        background: "#0070f3",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "14px"
+                      }}
+                    >
+                      edit price
+                    </button>
+                    <button
+                      className="cancel-btn"
+                      onClick={() => onCancelClick?.(listing)}
+                      style={{
+                        flex: 1,
+                        padding: "8px",
+                        background: "#dc2626",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "14px"
+                      }}
+                    >
+                      cancel
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
