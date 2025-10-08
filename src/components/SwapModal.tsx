@@ -57,13 +57,23 @@ export default function SwapModal({ listing, onClose, onSuccess }: SwapModalProp
 
       const paymentResult = await broadcastSignedTx(tx);
       const paymentTxId = typeof paymentResult === 'string' ? paymentResult : paymentResult.txid || 'unknown';
-      console.log("payment tx broadcasted:", paymentTxId);
+      console.log("payment result:", paymentResult);
+
+      // check if payment failed
+      if (paymentResult && typeof paymentResult === 'object' && (paymentResult as any).error) {
+        throw new Error(`Payment failed: ${(paymentResult as any).reason || (paymentResult as any).error}`);
+      }
 
       // step 2: mark listing as sold on-chain
       setStatus("marking listing as sold on-chain...");
       const markSoldResult = await markListingSold(wallet.privateKey, listing.id, nonce + 1);
       const markSoldTxId = typeof markSoldResult === 'string' ? markSoldResult : markSoldResult.txid || 'unknown';
-      console.log("mark-sold tx broadcasted:", markSoldTxId);
+      console.log("mark-sold result:", markSoldResult);
+
+      // check if mark-sold failed
+      if (markSoldResult && typeof markSoldResult === 'object' && (markSoldResult as any).error) {
+        throw new Error(`Mark-sold failed: ${(markSoldResult as any).reason || (markSoldResult as any).error}`);
+      }
 
       setTxId(paymentTxId);
       setStatus(`swap complete! payment: ${paymentTxId.substring(0, 10)}... | mark-sold: ${markSoldTxId.substring(0, 10)}...`);
