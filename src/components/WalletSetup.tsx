@@ -9,6 +9,8 @@ export default function WalletSetup({ onWalletCreated }: { onWalletCreated: () =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [useRealTurnkey, setUseRealTurnkey] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importKey, setImportKey] = useState("");
   const { passkeyClient, authIframeClient } = useTurnkey();
 
   const createWalletWithPasskey = async () => {
@@ -65,6 +67,7 @@ export default function WalletSetup({ onWalletCreated }: { onWalletCreated: () =
       saveWallet(wallet);
 
       console.log("wallet created:", wallet.address);
+      alert(`Wallet created!\n\nAddress: ${wallet.address}\n\nIMPORTANT: Save your private key to restore later:\n${wallet.privateKey}\n\n(Copy it now!)`);
 
       // notify parent
       onWalletCreated();
@@ -73,6 +76,36 @@ export default function WalletSetup({ onWalletCreated }: { onWalletCreated: () =
       setError(e.message || "failed to create wallet");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImportWallet = () => {
+    if (!importKey || importKey.length !== 64) {
+      setError("Invalid private key (must be 64 hex characters)");
+      return;
+    }
+
+    try {
+      const { getAddressFromPrivateKey, pubKeyfromPrivKey } = require("@stacks/transactions");
+      const { StacksTestnet } = require("@stacks/network");
+
+      const network = new StacksTestnet();
+      const address = getAddressFromPrivateKey(importKey, network.version);
+      const publicKey = pubKeyfromPrivKey(importKey).data;
+
+      const wallet = {
+        address,
+        privateKey: importKey,
+        publicKey: Buffer.from(publicKey).toString('hex'),
+        userId: `imported-${Date.now()}`,
+      };
+
+      saveWallet(wallet);
+      console.log("wallet imported:", wallet.address);
+      onWalletCreated();
+    } catch (e: any) {
+      console.error("import failed:", e);
+      setError("Failed to import wallet");
     }
   };
 
@@ -88,24 +121,90 @@ export default function WalletSetup({ onWalletCreated }: { onWalletCreated: () =
           </div>
         )}
 
-        <div style={{ marginBottom: "20px" }}>
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              checked={useRealTurnkey}
-              onChange={(e) => setUseRealTurnkey(e.target.checked)}
-            />
-            <span style={{ fontSize: "14px" }}>Use Real Turnkey (requires passkey setup)</span>
-          </label>
-        </div>
+        {!showImport ? (
+          <>
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={useRealTurnkey}
+                  onChange={(e) => setUseRealTurnkey(e.target.checked)}
+                />
+                <span style={{ fontSize: "14px" }}>Use Real Turnkey (requires passkey setup)</span>
+              </label>
+            </div>
 
-        <button
-          onClick={useRealTurnkey ? createWalletWithPasskey : createWalletDemo}
-          disabled={loading}
-          className="create-btn"
-        >
-          {loading ? "creating wallet..." : useRealTurnkey ? "create wallet with passkey" : "create demo wallet"}
-        </button>
+            <button
+              onClick={useRealTurnkey ? createWalletWithPasskey : createWalletDemo}
+              disabled={loading}
+              className="create-btn"
+            >
+              {loading ? "creating wallet..." : useRealTurnkey ? "create wallet with passkey" : "create demo wallet"}
+            </button>
+
+            <button
+              onClick={() => setShowImport(true)}
+              style={{
+                marginTop: "12px",
+                background: "transparent",
+                color: "#0070f3",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "14px",
+                textDecoration: "underline"
+              }}
+            >
+              or restore existing wallet
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontSize: "14px" }}>
+                Enter your private key (64 hex characters):
+              </label>
+              <input
+                type="text"
+                value={importKey}
+                onChange={(e) => setImportKey(e.target.value)}
+                placeholder="abcdef123456..."
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  borderRadius: "6px",
+                  border: "1px solid #ddd",
+                  fontFamily: "monospace",
+                  fontSize: "12px"
+                }}
+              />
+            </div>
+
+            <button
+              onClick={handleImportWallet}
+              className="create-btn"
+              style={{ marginBottom: "8px" }}
+            >
+              restore wallet
+            </button>
+
+            <button
+              onClick={() => {
+                setShowImport(false);
+                setImportKey("");
+                setError("");
+              }}
+              style={{
+                background: "transparent",
+                color: "#666",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "14px"
+              }}
+            >
+              back
+            </button>
+          </>
+        )}
 
         <div className="info">
           <p>no browser extension needed</p>
