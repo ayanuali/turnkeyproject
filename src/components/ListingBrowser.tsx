@@ -27,17 +27,16 @@ export default function ListingBrowser({
   onEditClick?: (listing: any) => void;
 }) {
   const [listings, setListings] = useState<OnChainListing[]>([]);
-  const [myAddr, setMyAddr] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // get wallet address directly (not from state to avoid timing issues)
+  const getMyAddress = () => {
+    const wallet = getWallet();
+    return wallet?.address || "";
+  };
 
   useEffect(() => {
     loadListings();
-
-    // get my address
-    const wallet = getWallet();
-    if (wallet) {
-      setMyAddr(wallet.address);
-    }
   }, [refresh]);
 
   const loadListings = async () => {
@@ -130,10 +129,13 @@ export default function ListingBrowser({
   };
 
   // filter listings based on mode
+  const myAddr = getMyAddress();
   const displayListings = showOnlyOthers
     ? listings.filter(l => l.seller !== myAddr)
     : listings.filter(l => l.seller === myAddr);
 
+  console.log("my address:", myAddr);
+  console.log("all listings:", listings);
   console.log("display listings (filtered):", displayListings.length);
 
   return (
