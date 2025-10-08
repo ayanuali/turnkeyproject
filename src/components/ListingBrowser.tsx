@@ -120,7 +120,7 @@ export default function ListingBrowser({
       }
 
       console.log("fetched listings:", fetchedListings);
-      setListings(fetchedListings.filter(l => l.active));
+      setListings(fetchedListings); // keep all listings (active and inactive)
     } catch (e) {
       console.error("failed to load listings:", e);
     } finally {
@@ -131,8 +131,8 @@ export default function ListingBrowser({
   // filter listings based on mode
   const myAddr = getMyAddress();
   const displayListings = showOnlyOthers
-    ? listings.filter(l => l.seller !== myAddr)
-    : listings.filter(l => l.seller === myAddr);
+    ? listings.filter(l => l.seller !== myAddr && l.active) // browse: only show active listings from others
+    : listings.filter(l => l.seller === myAddr); // my listings: show all (active and inactive)
 
   console.log("my address:", myAddr);
   console.log("all listings:", listings);
@@ -177,43 +177,49 @@ export default function ListingBrowser({
               )}
               {!showOnlyOthers && (
                 <div style={{ marginTop: "12px", display: "flex", gap: "8px", flexDirection: "column" }}>
-                  <div style={{ fontSize: "12px", color: "#666" }}>
-                    id: {listing.id} • active: {listing.active ? "yes" : "no"}
+                  <div style={{
+                    fontSize: "12px",
+                    color: listing.active ? "#666" : "#dc2626",
+                    fontWeight: listing.active ? "normal" : "600"
+                  }}>
+                    id: {listing.id} • status: {listing.active ? "active" : "sold/cancelled"}
                   </div>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <button
-                      className="edit-btn"
-                      onClick={() => onEditClick?.(listing)}
-                      style={{
-                        flex: 1,
-                        padding: "8px",
-                        background: "#0070f3",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        fontSize: "14px"
-                      }}
-                    >
-                      edit price
-                    </button>
-                    <button
-                      className="cancel-btn"
-                      onClick={() => onCancelClick?.(listing)}
-                      style={{
-                        flex: 1,
-                        padding: "8px",
-                        background: "#dc2626",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        fontSize: "14px"
-                      }}
-                    >
-                      cancel
-                    </button>
-                  </div>
+                  {listing.active && (
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button
+                        className="edit-btn"
+                        onClick={() => onEditClick?.(listing)}
+                        style={{
+                          flex: 1,
+                          padding: "8px",
+                          background: "#0070f3",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontSize: "14px"
+                        }}
+                      >
+                        edit price
+                      </button>
+                      <button
+                        className="cancel-btn"
+                        onClick={() => onCancelClick?.(listing)}
+                        style={{
+                          flex: 1,
+                          padding: "8px",
+                          background: "#dc2626",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontSize: "14px"
+                        }}
+                      >
+                        cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
