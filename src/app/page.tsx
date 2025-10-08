@@ -110,6 +110,25 @@ export default function Home() {
     setRefreshKey(prev => prev + 1);
   };
 
+  const handleExportKey = () => {
+    const wallet = getWallet();
+    if (!wallet) {
+      alert("No wallet found");
+      return;
+    }
+
+    const copyToClipboard = (text: string) => {
+      navigator.clipboard.writeText(text).then(
+        () => alert(`Private key copied to clipboard!\n\nAddress: ${wallet.address}\n\nPrivate Key: ${wallet.privateKey}\n\n⚠️ NEVER share this with anyone!`),
+        () => alert(`Failed to copy. Here's your private key:\n\n${wallet.privateKey}\n\n⚠️ Copy it manually and NEVER share with anyone!`)
+      );
+    };
+
+    if (confirm("⚠️ WARNING ⚠️\n\nYour private key gives FULL ACCESS to your wallet.\n\nNEVER share it with anyone!\n\nCopy to clipboard?")) {
+      copyToClipboard(wallet.privateKey);
+    }
+  };
+
   if (!hasWallet) {
     return <WalletSetup onWalletCreated={handleWalletCreated} />;
   }
@@ -121,6 +140,22 @@ export default function Home() {
         <div className="wallet-info">
           <span className="label">wallet:</span>
           <span className="address">{walletAddr}</span>
+          <button
+            onClick={handleExportKey}
+            style={{
+              marginLeft: "12px",
+              padding: "6px 12px",
+              background: "#dc2626",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "12px",
+              fontWeight: "500"
+            }}
+          >
+            🔑 export key
+          </button>
         </div>
       </header>
 
