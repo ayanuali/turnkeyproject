@@ -14,9 +14,9 @@ import { StacksTestnet } from "@stacks/network";
 
 const network = new StacksTestnet();
 
-// deployed contract address (marketplace2 with cancel and edit features)
+// deployed contract address (marketplace-2 with cancel and edit features)
 export const MARKETPLACE_CONTRACT_ADDRESS = "ST1QNFKCN58W3F1D9FQYSZGQKWG872KC6KYAV692X";
-export const MARKETPLACE_CONTRACT_NAME = "marketplace2";
+export const MARKETPLACE_CONTRACT_NAME = "marketplace-2";
 
 // create listing on-chain
 export const createListingOnChain = async (
