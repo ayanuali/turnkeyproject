@@ -14,9 +14,9 @@ import { StacksTestnet } from "@stacks/network";
 
 const network = new StacksTestnet();
 
-// deployed contract address
+// deployed contract address (marketplace2 with cancel and edit features)
 export const MARKETPLACE_CONTRACT_ADDRESS = "ST1QNFKCN58W3F1D9FQYSZGQKWG872KC6KYAV692X";
-export const MARKETPLACE_CONTRACT_NAME = "marketplace";
+export const MARKETPLACE_CONTRACT_NAME = "marketplace2";
 
 // create listing on-chain
 export const createListingOnChain = async (
@@ -151,6 +151,73 @@ export const markListingSold = async (
     return result;
   } catch (e) {
     console.error("mark-sold failed:", e);
+    throw e;
+  }
+};
+
+// cancel listing on-chain
+export const cancelListingOnChain = async (
+  senderKey: string,
+  listingId: number,
+  nonce: number
+) => {
+  try {
+    console.log("canceling listing on-chain");
+
+    const txOptions = {
+      contractAddress: MARKETPLACE_CONTRACT_ADDRESS,
+      contractName: MARKETPLACE_CONTRACT_NAME,
+      functionName: "cancel-listing",
+      functionArgs: [uintCV(listingId)],
+      senderKey,
+      network,
+      anchorMode: AnchorMode.Any,
+      postConditionMode: PostConditionMode.Allow,
+      nonce: BigInt(nonce),
+      fee: BigInt(10000),
+    };
+
+    const tx = await makeContractCall(txOptions);
+    const result = await broadcastTransaction(tx, network);
+
+    console.log("listing cancelled:", result);
+    return result;
+  } catch (e) {
+    console.error("cancel failed:", e);
+    throw e;
+  }
+};
+
+// update listing price on-chain
+export const updatePriceOnChain = async (
+  senderKey: string,
+  listingId: number,
+  newPriceMicroStx: number,
+  nonce: number
+) => {
+  try {
+    console.log("updating price on-chain");
+
+    const txOptions = {
+      contractAddress: MARKETPLACE_CONTRACT_ADDRESS,
+      contractName: MARKETPLACE_CONTRACT_NAME,
+      functionName: "update-price",
+      functionArgs: [uintCV(listingId), uintCV(newPriceMicroStx)],
+      senderKey,
+      network,
+      anchorMode: AnchorMode.Any,
+      postConditionMode: PostConditionMode.Allow,
+      nonce: BigInt(nonce),
+      fee: BigInt(10000),
+    };
+
+    const tx = await makeContractCall(txOptions);
+    const result = await broadcastTransaction(tx, network);
+
+    console.log("price updated:", result);
+    return result;
+  } catch (e) {
+    console.error("update price failed:", e);
     throw e;
   }
 };

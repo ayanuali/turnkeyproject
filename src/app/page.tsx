@@ -6,6 +6,8 @@ import CreateListing from "@/components/CreateListing";
 import ListingBrowser from "@/components/ListingBrowser";
 import SwapModal from "@/components/SwapModal";
 import { getWallet } from "@/lib/sbtc";
+import { getAccountNonce } from "@/lib/stacks";
+import { cancelListingOnChain, updatePriceOnChain } from "@/lib/marketplace-contract";
 import { Listing } from "@/types";
 
 export default function Home() {
@@ -47,10 +49,22 @@ export default function Home() {
     if (!confirm(`Cancel listing #${listing.id}?`)) return;
 
     try {
+      const wallet = getWallet();
+      if (!wallet) {
+        alert("No wallet found");
+        return;
+      }
+
       console.log("canceling listing:", listing.id);
-      // TODO: call cancel-listing contract function
-      alert("Cancel functionality will be available after contract redeployment");
-      setRefreshKey(prev => prev + 1);
+      const nonce = await getAccountNonce(wallet.address);
+
+      const result = await cancelListingOnChain(wallet.privateKey, listing.id, nonce);
+      const txId = typeof result === 'string' ? result : result.txid || 'unknown';
+
+      console.log("cancel tx:", txId);
+      alert(`Listing cancelled!\n\nTransaction: ${txId}\n\nRefresh in ~30 seconds to see changes.`);
+
+      setTimeout(() => setRefreshKey(prev => prev + 1), 2000);
     } catch (e: any) {
       console.error("cancel failed:", e);
       alert(e.message || "cancel failed");
@@ -61,11 +75,30 @@ export default function Home() {
     const newPrice = prompt(`Enter new price in STX (current: ${(listing.price / 1000000).toFixed(2)})`);
     if (!newPrice) return;
 
+    const newPriceNum = parseFloat(newPrice);
+    if (isNaN(newPriceNum) || newPriceNum <= 0) {
+      alert("Invalid price");
+      return;
+    }
+
     try {
-      console.log("updating price for listing:", listing.id, "to", newPrice);
-      // TODO: call update-price contract function
-      alert("Edit functionality will be available after contract redeployment");
-      setRefreshKey(prev => prev + 1);
+      const wallet = getWallet();
+      if (!wallet) {
+        alert("No wallet found");
+        return;
+      }
+
+      console.log("updating price for listing:", listing.id, "to", newPriceNum, "STX");
+      const nonce = await getAccountNonce(wallet.address);
+      const newPriceMicroStx = Math.floor(newPriceNum * 1000000);
+
+      const result = await updatePriceOnChain(wallet.privateKey, listing.id, newPriceMicroStx, nonce);
+      const txId = typeof result === 'string' ? result : result.txid || 'unknown';
+
+      console.log("update price tx:", txId);
+      alert(`Price updated to ${newPriceNum} STX!\n\nTransaction: ${txId}\n\nRefresh in ~30 seconds to see changes.`);
+
+      setTimeout(() => setRefreshKey(prev => prev + 1), 2000);
     } catch (e: any) {
       console.error("edit failed:", e);
       alert(e.message || "edit failed");
